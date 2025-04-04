@@ -21,7 +21,7 @@ function TodoList() {
   const fetchTasks = async () => {
     setLoading(true);
     try {
-      const response = await fetch("http://127.0.0.1:8000/todo/tasks/");
+      const response = await fetch("https://todo-backend-2-z23h.onrender.com/todo/tasks/");
       if (!response.ok) throw new Error("Failed to fetch tasks");
       const data = await response.json();
       setTasks(data);
@@ -36,7 +36,7 @@ function TodoList() {
   const addTask = async () => {
     if (newTask.trim() === "") return alert("Task cannot be empty!");
     try {
-      const response = await fetch("http://127.0.0.1:8000/todo/tasks/add/", {
+      const response = await fetch("https://todo-backend-2-z23h.onrender.com/todo/tasks/add/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: newTask }),
@@ -54,7 +54,7 @@ function TodoList() {
   const toggleCompletion = async (id) => {
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/todo/tasks/toggle/${id}/`,
+        `https://todo-backend-2-z23h.onrender.com/todo/tasks/toggle/${id}/`,
         { method: "POST" }
       );
       if (!response.ok) throw new Error("Failed to toggle task");
@@ -71,7 +71,7 @@ function TodoList() {
   const deleteTask = async (id) => {
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/todo/tasks/delete/${id}/`,
+        `https://todo-backend-2-z23h.onrender.com/todo/tasks/delete/${id}/`,
         { method: "DELETE" }
       );
       if (!response.ok) throw new Error("Failed to delete task");
