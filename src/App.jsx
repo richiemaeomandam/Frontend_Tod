@@ -21,7 +21,7 @@ function TodoList() {
   const fetchTasks = async () => {
     setLoading(true);
     try {
-      const response = await fetch("https://backend-1-fvoi.onrender.com/todo/");
+      const response = await fetch("https://backend-1-fvoi.onrender.com/api/");
       if (!response.ok) throw new Error("Failed to fetch tasks");
       const data = await response.json();
       setTasks(data);
