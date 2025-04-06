@@ -4,137 +4,95 @@ import "./App.css";
 function App() {
   const [tasks, setTasks] = useState([]);
   const [newTask, setNewTask] = useState("");
-  const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
-  const [darkMode, setDarkMode] = useState(
-    JSON.parse(localStorage.getItem("darkMode")) || false
-  );
-
-  useEffect(() => {
-    localStorage.setItem("darkMode", JSON.stringify(darkMode));
-  }, [darkMode]);
-
-  useEffect(() => {
-    fetchTasks();
-  }, []);
-
   const API_URL = "https://backend-1-fvoi.onrender.com/api/tasks/";
 
   const fetchTasks = async () => {
-    setLoading(true);
     try {
-      const response = await fetch(API_URL);
-      if (!response.ok) throw new Error("Failed to fetch tasks");
-      const data = await response.json();
+      const res = await fetch(API_URL);
+      const data = await res.json();
       setTasks(data);
-    } catch (error) {
-      console.error("Error fetching tasks:", error);
+    } catch (err) {
+      console.error("Failed to fetch tasks", err);
     } finally {
       setLoading(false);
     }
   };
 
   const addTask = async () => {
-    if (newTask.trim() === "") return alert("Task cannot be empty!");
+    if (newTask.trim() === "") return alert("Please enter a task");
+
     try {
-      const response = await fetch(API_URL, {
+      const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title: newTask }),
       });
-      if (!response.ok) throw new Error("Failed to add task");
-      const addedTask = await response.json();
-      setTasks([...tasks, addedTask]);
+
+      const task = await res.json();
+      setTasks([...tasks, task]);
       setNewTask("");
-    } catch (error) {
-      console.error("Error adding task:", error);
+    } catch (err) {
+      console.error("Failed to add task", err);
     }
   };
 
-  const toggleCompletion = async (id, completed) => {
+  const toggleTask = async (task) => {
     try {
-      const response = await fetch(`${API_URL}${id}/`, {
+      const res = await fetch(`${API_URL}${task.id}/`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ completed: !completed }),
+        body: JSON.stringify({ completed: !task.completed }),
       });
-      if (!response.ok) throw new Error("Failed to update task");
 
-      const updatedTask = await response.json();
-      setTasks((prevTasks) =>
-        prevTasks.map((task) => (task.id === id ? updatedTask : task))
-      );
-    } catch (error) {
-      console.error("Error updating task:", error);
+      const updated = await res.json();
+      setTasks(tasks.map((t) => (t.id === task.id ? updated : t)));
+    } catch (err) {
+      console.error("Failed to toggle task", err);
     }
   };
 
   const deleteTask = async (id) => {
     try {
-      const response = await fetch(`${API_URL}${id}/`, {
-        method: "DELETE",
-      });
-      if (!response.ok) throw new Error("Failed to delete task");
-      setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
-    } catch (error) {
-      console.error("Error deleting task:", error);
+      await fetch(`${API_URL}${id}/`, { method: "DELETE" });
+      setTasks(tasks.filter((t) => t.id !== id));
+    } catch (err) {
+      console.error("Failed to delete task", err);
     }
   };
 
-  const filteredTasks = tasks.filter((task) => {
-    if (filter === "completed") return task.completed;
-    if (filter === "pending") return !task.completed;
-    return true;
-  });
-
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-  };
+  useEffect(() => {
+    fetchTasks();
+  }, []);
 
   return (
-    <div className={`container ${darkMode ? "dark-mode" : ""}`}>
-      <button onClick={toggleDarkMode} className="dark-mode-btn">
-        {darkMode ? "🌙 Dark Mode" : "🔆 Light Mode"}
-      </button>
-      <h2 className="title">To-Do List</h2>
+    <div className="App" style={{ padding: "20px", maxWidth: "600px", margin: "auto" }}>
+      <h1>To-Do List</h1>
 
-      <div className="input-container">
-        <input
-          type="text"
-          style={{ fontSize: "20px", flex: "1" }}
-          placeholder="Add a new task..."
-          value={newTask}
-          onChange={(e) => setNewTask(e.target.value)}
-        />
-        <button className="add-btn" onClick={addTask}>
-          ➕ Add
-        </button>
-      </div>
-
-      <div className="filter-buttons">
-        <button onClick={() => setFilter("all")}>All</button>
-        <button onClick={() => setFilter("completed")}>Completed</button>
-        <button onClick={() => setFilter("pending")}>Pending</button>
-      </div>
+      <input
+        type="text"
+        placeholder="Add new task..."
+        value={newTask}
+        onChange={(e) => setNewTask(e.target.value)}
+        style={{ padding: "10px", width: "70%", marginRight: "10px" }}
+      />
+      <button onClick={addTask}>Add</button>
 
       {loading ? (
-        <p>Loading tasks...</p>
+        <p>Loading...</p>
       ) : (
-        <ul className="todo-list">
-          {filteredTasks.map((task) => (
-            <li
-              key={task.id}
-              className={`todo-item ${task.completed ? "completed" : ""}`}
-            >
+        <ul>
+          {tasks.map((task) => (
+            <li key={task.id} style={{ marginTop: "10px" }}>
               <input
                 type="checkbox"
                 checked={task.completed}
-                onChange={() => toggleCompletion(task.id, task.completed)}
+                onChange={() => toggleTask(task)}
               />
-              <span>{task.title}</span>
-              <div className="todo-actions">
-                <button onClick={() => deleteTask(task.id)}>❌</button>
-              </div>
+              <span style={{ marginLeft: "10px" }}>{task.title}</span>
+              <button style={{ marginLeft: "10px" }} onClick={() => deleteTask(task.id)}>
+                ❌
+              </button>
             </li>
           ))}
         </ul>
