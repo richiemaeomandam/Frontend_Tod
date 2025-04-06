@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import "./App.css";
 
-function TodoList() {
+function App() {
   const [tasks, setTasks] = useState([]);
   const [newTask, setNewTask] = useState("");
   const [filter, setFilter] = useState("all");
@@ -18,10 +18,12 @@ function TodoList() {
     fetchTasks();
   }, []);
 
+  const API_URL = "https://backend-1-fvoi.onrender.com/api/tasks/";
+
   const fetchTasks = async () => {
     setLoading(true);
     try {
-      const response = await fetch("https://todo-backend-2-z23h.onrender.com/todo/api/tasks/");
+      const response = await fetch(API_URL);
       if (!response.ok) throw new Error("Failed to fetch tasks");
       const data = await response.json();
       setTasks(data);
@@ -35,13 +37,12 @@ function TodoList() {
   const addTask = async () => {
     if (newTask.trim() === "") return alert("Task cannot be empty!");
     try {
-      const response = await fetch("https://todo-backend-2-z23h.onrender.com/todo/api/tasks/", {
+      const response = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title: newTask }),
       });
       if (!response.ok) throw new Error("Failed to add task");
-
       const addedTask = await response.json();
       setTasks([...tasks, addedTask]);
       setNewTask("");
@@ -52,33 +53,28 @@ function TodoList() {
 
   const toggleCompletion = async (id, completed) => {
     try {
-      const response = await fetch(
-        `https://todo-backend-2-z23h.onrender.com/todo/api/tasks/${id}/`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ completed: !completed }),
-        }
-      );
-      if (!response.ok) throw new Error("Failed to toggle task");
+      const response = await fetch(`${API_URL}${id}/`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ completed: !completed }),
+      });
+      if (!response.ok) throw new Error("Failed to update task");
 
       const updatedTask = await response.json();
       setTasks((prevTasks) =>
         prevTasks.map((task) => (task.id === id ? updatedTask : task))
       );
     } catch (error) {
-      console.error("Error toggling task:", error);
+      console.error("Error updating task:", error);
     }
   };
 
   const deleteTask = async (id) => {
     try {
-      const response = await fetch(
-        `https://todo-backend-2-z23h.onrender.com/todo/api/tasks/${id}/`,
-        { method: "DELETE" }
-      );
+      const response = await fetch(`${API_URL}${id}/`, {
+        method: "DELETE",
+      });
       if (!response.ok) throw new Error("Failed to delete task");
-
       setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
     } catch (error) {
       console.error("Error deleting task:", error);
@@ -147,4 +143,4 @@ function TodoList() {
   );
 }
 
-export default TodoList;
+export default App;
