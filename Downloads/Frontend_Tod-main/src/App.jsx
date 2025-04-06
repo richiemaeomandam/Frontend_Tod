@@ -9,10 +9,6 @@ function TodoList() {
   const [darkMode, setDarkMode] = useState(
     JSON.parse(localStorage.getItem("darkMode")) || false
   );
-  const [editTaskId, setEditTaskId] = useState(null);
-  const [editTaskText, setEditTaskText] = useState("");
-
-  const BACKEND_BASE = "https://todo-backend-2-z23h.onrender.com/todo/api/tasks/";
 
   useEffect(() => {
     localStorage.setItem("darkMode", JSON.stringify(darkMode));
@@ -25,7 +21,7 @@ function TodoList() {
   const fetchTasks = async () => {
     setLoading(true);
     try {
-      const response = await fetch(BACKEND_BASE);
+      const response = await fetch("https://todo-backend-2-z23h.onrender.com/todo/api/tasks/");
       if (!response.ok) throw new Error("Failed to fetch tasks");
       const data = await response.json();
       setTasks(data);
@@ -39,12 +35,13 @@ function TodoList() {
   const addTask = async () => {
     if (newTask.trim() === "") return alert("Task cannot be empty!");
     try {
-      const response = await fetch(BACKEND_BASE, {
+      const response = await fetch("https://todo-backend-2-z23h.onrender.com/todo/api/tasks/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title: newTask }),
       });
       if (!response.ok) throw new Error("Failed to add task");
+
       const addedTask = await response.json();
       setTasks([...tasks, addedTask]);
       setNewTask("");
@@ -53,14 +50,16 @@ function TodoList() {
     }
   };
 
-  const toggleCompletion = async (id) => {
+  const toggleCompletion = async (id, completed) => {
     try {
-      const taskToToggle = tasks.find((task) => task.id === id);
-      const response = await fetch(`${BACKEND_BASE}${id}/`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...taskToToggle, completed: !taskToToggle.completed }),
-      });
+      const response = await fetch(
+        `https://todo-backend-2-z23h.onrender.com/todo/api/tasks/${id}/`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ completed: !completed }),
+        }
+      );
       if (!response.ok) throw new Error("Failed to toggle task");
 
       const updatedTask = await response.json();
@@ -74,36 +73,15 @@ function TodoList() {
 
   const deleteTask = async (id) => {
     try {
-      const response = await fetch(`${BACKEND_BASE}${id}/`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `https://todo-backend-2-z23h.onrender.com/todo/api/tasks/${id}/`,
+        { method: "DELETE" }
+      );
       if (!response.ok) throw new Error("Failed to delete task");
 
       setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
     } catch (error) {
       console.error("Error deleting task:", error);
-    }
-  };
-
-  const editTask = async (id) => {
-    if (editTaskText.trim() === "") return alert("Task cannot be empty!");
-    try {
-      const taskToEdit = tasks.find((task) => task.id === id);
-      const response = await fetch(`${BACKEND_BASE}${id}/`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...taskToEdit, title: editTaskText }),
-      });
-      if (!response.ok) throw new Error("Failed to edit task");
-
-      const updatedTask = await response.json();
-      setTasks((prevTasks) =>
-        prevTasks.map((task) => (task.id === id ? updatedTask : task))
-      );
-      setEditTaskId(null);
-      setEditTaskText("");
-    } catch (error) {
-      console.error("Error editing task:", error);
     }
   };
 
@@ -155,34 +133,12 @@ function TodoList() {
               <input
                 type="checkbox"
                 checked={task.completed}
-                onChange={() => toggleCompletion(task.id)}
+                onChange={() => toggleCompletion(task.id, task.completed)}
               />
-              {editTaskId === task.id ? (
-                <>
-                  <input
-                    type="text"
-                    value={editTaskText}
-                    onChange={(e) => setEditTaskText(e.target.value)}
-                  />
-                  <button onClick={() => editTask(task.id)}>💾 Save</button>
-                  <button onClick={() => setEditTaskId(null)}>❌ Cancel</button>
-                </>
-              ) : (
-                <>
-                  <span>{task.title}</span>
-                  <div className="todo-actions">
-                    <button onClick={() => deleteTask(task.id)}>❌</button>
-                    <button
-                      onClick={() => {
-                        setEditTaskId(task.id);
-                        setEditTaskText(task.title);
-                      }}
-                    >
-                      ✏️
-                    </button>
-                  </div>
-                </>
-              )}
+              <span>{task.title}</span>
+              <div className="todo-actions">
+                <button onClick={() => deleteTask(task.id)}>❌</button>
+              </div>
             </li>
           ))}
         </ul>
